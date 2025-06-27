@@ -74,19 +74,27 @@ bool palavraExiste(const char* str, int len) {
     char temp[MAX_LEN];
     strncpy(temp, str, len);
     temp[len] = '\0';
-    int firstLetter = temp[0]-97;
-    int totalSkip = 0;
-    for(int i = 0; i < firstLetter; i++) {
-        totalSkip+=qtdePalavras[i];
+
+    int firstLetter = temp[0] - 'a';
+
+    int start = 0;
+    for (int i = 0; i < firstLetter; i++) {
+        start += qtdePalavras[i];
     }
-    for (int i = totalSkip; i < TOTAL_WORDS; i++) {
-        int cmp = strcmp(temp, allPalavras[i]);
+    int end = start + qtdePalavras[firstLetter] - 1;
+
+    while (start <= end) {
+        int mid = (start + end) / 2;
+        int cmp = strcmp(temp, allPalavras[mid]);
         if (cmp == 0) {
             return true;
-        } else if(cmp < 0) {
-            return false;
+        } else if (cmp < 0) {
+            end = mid - 1;
+        } else {
+            start = mid + 1;
         }
     }
+
     return false;
 }
 
