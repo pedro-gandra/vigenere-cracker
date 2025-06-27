@@ -15,7 +15,7 @@
 #define MAX_CESAR 5
 #define MIN_COBERTURA 0.9
 
-char **allPalavras;
+char allPalavras[TOTAL_WORDS][MAX_LEN];
 int qtdePalavras[26];
 char bigramasRaros[TOTAL_BI][2];
 float freqAlvo;
@@ -31,7 +31,7 @@ typedef struct {
     double valor;   
 } probLetra;
 
-void copyWordsAndFrequency(FILE* palavras, char** w) {
+void copyWordsAndFrequency(FILE* palavras, char w[][MAX_LEN]) {
     int i = 0, l = 0;
     char letra = 'a';
     int total = 0;
@@ -160,21 +160,37 @@ bool validarBigramas(char str[]) {
     return true;
 }
 
-bool validarVogais(char str[]) {
-    clock_t inicio, fim;
-    inicio = clock();
+bool validarVogais(const char str[]) {
+    clock_t inicio = clock();
     int vogais = 0;
     int size = 0;
+    int janelaVogais = 0;
     for (int i = 0; str[i] != '\0'; i++) {
+        char c = str[i];
         size++;
-        if(str[i] == 'a' || str[i] == 'e' || str[i] == 'i' || str[i] == 'o' || str[i] == 'u')
-            vogais++;
+        bool atualEhVogal = (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u');
+        if (atualEhVogal) vogais++;
+        if (i < 7) {
+            if (atualEhVogal) janelaVogais++;
+        } else {
+            char anterior = str[i - 7];
+            if (anterior == 'a' || anterior == 'e' || anterior == 'i' || anterior == 'o' || anterior == 'u') {
+                janelaVogais--;
+            }
+            if (atualEhVogal) janelaVogais++;
+            if (janelaVogais < 2) {
+                tVogais += (double)(clock() - inicio) / CLOCKS_PER_SEC;
+                return false;
+            }
+        }
     }
-    fim = clock();
-    tVogais += (double)(fim - inicio) / CLOCKS_PER_SEC;
-    if((float)vogais/size <= 0.35) {
+
+    tVogais += (double)(clock() - inicio) / CLOCKS_PER_SEC;
+
+    if (size == 0 || (float)vogais / size <= 0.35f) {
         return false;
     }
+
     return true;
 }
 
@@ -226,11 +242,11 @@ char deslocar(char c, char k) {
     return c+'a';
 }
 
-void decode(char txt[], char key[]) {
+void decode(char new[], char txt[], char key[]) {
     int pos = 0;
     int keySize = strlen(key);
     for(int i = 0; txt[i] != '\0'; i++) {
-        txt[i] = deslocar(txt[i], key[pos]);
+        new[i] = deslocar(txt[i], key[pos]);
         pos++;
         if(pos == keySize)
             pos = 0;
@@ -256,7 +272,7 @@ void inserir(probLetra prov[], double sim, int l) {
 bool gerarCombinacoes(int pos, int sizeKey, char chave[], char letras[][cesarAlvo], char new[], char txt[]) {
     if (pos == sizeKey) {
         chave[pos] = '\0';
-        decode(new, chave);
+        decode(new, txt, chave);
         if(validarVogais(new)) {
             if(validarBigramas(new)) {
                 if(coberturaPalavras(new) >= MIN_COBERTURA) {
@@ -268,7 +284,6 @@ bool gerarCombinacoes(int pos, int sizeKey, char chave[], char letras[][cesarAlv
                 cBigramas++;
         } else
             cVogais++;
-        strcpy(new, txt);
         return false;
     }
 
@@ -338,10 +353,6 @@ int main() {
     bigramasAlvo = 0.10;
     FILE* listaMinusculas = fopen("resources/lista-minusculas.txt", "r");
     FILE* textoCifrado = fopen("resources/texto-cifrado.txt", "r");
-    allPalavras = malloc(TOTAL_WORDS*sizeof(char*));
-    for (int i = 0; i < TOTAL_WORDS; i++) {
-        allPalavras[i] = malloc(MAX_LEN*sizeof(char));
-    };
     copyWordsAndFrequency(listaMinusculas, allPalavras);
     copyBigramas(bigramasRaros);
     char txt[MAX_TXT];
