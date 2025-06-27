@@ -125,12 +125,16 @@ float coberturaPalavras(char* texto) {
 }
 
 bool bigramaInList(char bi[2]) {
-    for(int i = 0; i < TOTAL_BI; i++) {
-        if((bi[0] == bigramasRaros[i][0] && bi[1] < bigramasRaros[i][1]) || bi[0] < bigramasRaros[i][0])
-            return false;
-        if(bi[0] == bigramasRaros[i][0] && bi[1] == bigramasRaros[i][1]) {
-            return true;
-        }
+    int inicio = 0;
+    int fim = TOTAL_BI - 1;
+    while (inicio <= fim) {
+        int meio = (inicio + fim) / 2;
+        char a = bigramasRaros[meio][0];
+        char b = bigramasRaros[meio][1];
+
+        if (bi[0] == a && bi[1] == b) return true;
+        else if (bi[0] < a || (bi[0] == a && bi[1] < b)) fim = meio - 1;
+        else inicio = meio + 1;
     }
     return false;
 }
