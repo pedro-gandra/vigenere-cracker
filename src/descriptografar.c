@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define MAX_LEN 30
 #define MAX_KEY 10
@@ -11,8 +12,8 @@
 #define MAX_TXT 10000
 #define TOTAL_BI 393
 #define TOTAL_WORDS 245366
-#define MAX_CESAR 7
-#define MIN_COBERTURA 0.80
+#define MAX_CESAR 5
+#define MIN_COBERTURA 0.9
 
 char **allPalavras;
 int qtdePalavras[26];
@@ -22,6 +23,8 @@ int cesarAlvo = 1;
 float bigramasAlvo;
 
 double frequencias[ALF_LEN] = {0};
+int cSimilaridade = 0, cBigramas = 0, cCobertura = 0;
+double tTotal = 0, tPre = 0, tSimilaridade = 0, tBigramas = 0, tCobertura = 0;
 
 typedef struct {
     char l;
@@ -88,6 +91,8 @@ bool palavraExiste(const char* str, int len) {
 }
 
 float coberturaPalavras(char* texto) {
+    clock_t inicio, fim;
+    inicio = clock();
     int tam = strlen(texto);
     int i = 0;
     int acertos = 0;
@@ -106,6 +111,8 @@ float coberturaPalavras(char* texto) {
             i++;
         }
     }
+    fim = clock();
+    tCobertura += (double)(fim - inicio) / CLOCKS_PER_SEC;
     return (float) acertos/tam;
 }
 
@@ -121,16 +128,23 @@ bool bigramaInList(char bi[2]) {
 }
 
 bool validarBigramas(char str[]) {
+    clock_t inicio, fim;
+    inicio = clock();
     int cont = 0;
     int size = strlen(str);
     for (int i = 1; i < size; i++) {
         char bi[] = {str[i-1], str[i]};
         if(bigramaInList(bi)) {
             cont++;
-            if(cont >= (size-1)*bigramasAlvo)
+            if(cont >= (size-1)*bigramasAlvo) {
+                fim = clock();
+                tBigramas += (double)(fim - inicio) / CLOCKS_PER_SEC;
                 return false;
+            }
         }
     }
+    fim = clock();
+    tBigramas += (double)(fim - inicio) / CLOCKS_PER_SEC;
     return true;
 }
 
@@ -147,6 +161,9 @@ void limparTexto(FILE* textoFile, char txt[]) {
 }
 
 double calcularSimilaridade(char texto[]) {
+    clock_t inicio, fim;
+    inicio = clock();
+
     double freq[ALF_LEN] = {0};
     int total = 0;
 
@@ -168,6 +185,9 @@ double calcularSimilaridade(char texto[]) {
     }
 
     if (denomTexto == 0 || denomRef == 0) return 0.0;
+
+    fim = clock();
+    tSimilaridade += (double)(fim - inicio) / CLOCKS_PER_SEC;
 
     return numerador / (sqrt(denomTexto) * sqrt(denomRef));
 }
@@ -214,11 +234,16 @@ bool gerarCombinacoes(int pos, int sizeKey, char chave[], char letras[][cesarAlv
         chave[pos] = '\0';
         decode(new, chave);
         if(calcularSimilaridade(new) > freqAlvo) {
-            if(validarBigramas(new) && coberturaPalavras(new) >= MIN_COBERTURA) {
-                printf("%s - %s\n", new, chave);
-                return true;
-            }
-        }
+            if(validarBigramas(new)) {
+                if(coberturaPalavras(new) >= MIN_COBERTURA) {
+                    printf("%s - %s\n", new, chave);
+                    return true;
+                } else
+                    cCobertura++;
+            } else
+                cBigramas++;
+        } else
+            cSimilaridade++;
         strcpy(new, txt);
         return false;
     }
@@ -284,6 +309,8 @@ bool descriptografar(char txt[]) {
 }
 
 int main() {
+    clock_t inicio, fim;
+    inicio = clock();
     freqAlvo = 0.85;
     cesarAlvo = 1;
     bigramasAlvo = 0.10;
@@ -297,6 +324,8 @@ int main() {
     copyBigramas(bigramasRaros);
     char txt[MAX_TXT];
     limparTexto(textoCifrado, txt);
+    fim = clock();
+    tPre = (double)(fim - inicio) / CLOCKS_PER_SEC;
     printf("\nDESCRIPTOGRAFIA INICIADA\n\n");
     printf("Texto referencia:\n");
     printf("%s\n", txt);
@@ -308,9 +337,25 @@ int main() {
         printf("Nenhum texto possivel\n");
     }
     printf("\n");
-    //printf("%.4f", calcularSimilaridade("hojeeuvoucomerarrozefeijaoedepoisapresentarabombadotrabalhodeti"));
-    //printf("%.4f", coberturaPalavras("hojeeuvoucomerarrozefeijaoedepoisapresentarabombadotrabalhodeti"));
+    //printf("%.4f\n", calcularSimilaridade("eaiqualvaiseragoratuvaiterqueescolheroueuouacachacasedecidebebe"));
+    //printf("%.4f\n", coberturaPalavras("eaequalvaisaragoraturaiterqueascolheroqeuouacacdacasedecedebebe"));
     fclose(listaMinusculas);
     fclose(textoCifrado);
+    fim = clock();
+    tTotal = (double)(fim - inicio) / CLOCKS_PER_SEC;
+
+    printf("ESTATISTICAS\n\n");
+
+    printf("Tempo gasto:\n");
+    printf("Total: %.4f segundos\n", tTotal);
+    printf("Pre-processamento: %.4f segundos\n", tPre);
+    printf("Calculando similaridade: %.4f segundos\n", tSimilaridade);
+    printf("Analisando bigramas: %.4f segundos\n", tBigramas);
+    printf("Checando na lista de palavras: %.4f segundos\n", tCobertura);
+
+    printf("\nEliminacao de possibilidades:\n");
+    printf("Frequencia baixa: %d\n", cSimilaridade);
+    printf("Bigramas raros: %d\n", cBigramas);
+    printf("Sem palavras reais: %d\n", cCobertura);
     return 0;
 }
