@@ -23,8 +23,8 @@ int cesarAlvo = 1;
 float bigramasAlvo;
 
 double frequencias[ALF_LEN] = {0};
-int cSimilaridade = 0, cBigramas = 0, cCobertura = 0;
-double tTotal = 0, tPre = 0, tSimilaridade = 0, tBigramas = 0, tCobertura = 0;
+int cVogais = 0, cBigramas = 0, cCobertura = 0;
+double tTotal = 0, tPre = 0, tVogais = 0, tBigramas = 0, tCobertura = 0;
 
 typedef struct {
     char l;
@@ -160,6 +160,24 @@ bool validarBigramas(char str[]) {
     return true;
 }
 
+bool validarVogais(char str[]) {
+    clock_t inicio, fim;
+    inicio = clock();
+    int vogais = 0;
+    int size = 0;
+    for (int i = 0; str[i] != '\0'; i++) {
+        size++;
+        if(str[i] == 'a' || str[i] == 'e' || str[i] == 'i' || str[i] == 'o' || str[i] == 'u')
+            vogais++;
+    }
+    fim = clock();
+    tVogais += (double)(fim - inicio) / CLOCKS_PER_SEC;
+    if((float)vogais/size <= 0.35) {
+        return false;
+    }
+    return true;
+}
+
 void limparTexto(FILE* textoFile, char txt[]) {
     char c;
     int i = 0;
@@ -173,8 +191,6 @@ void limparTexto(FILE* textoFile, char txt[]) {
 }
 
 double calcularSimilaridade(char texto[]) {
-    clock_t inicio, fim;
-    inicio = clock();
 
     double freq[ALF_LEN] = {0};
     int total = 0;
@@ -197,9 +213,6 @@ double calcularSimilaridade(char texto[]) {
     }
 
     if (denomTexto == 0 || denomRef == 0) return 0.0;
-
-    fim = clock();
-    tSimilaridade += (double)(fim - inicio) / CLOCKS_PER_SEC;
 
     return numerador / (sqrt(denomTexto) * sqrt(denomRef));
 }
@@ -224,7 +237,6 @@ void decode(char txt[], char key[]) {
     }
 }
 
-
 void inserir(probLetra prov[], double sim, int l) {
     probLetra novo;
     novo.l = l + 'a';
@@ -245,7 +257,7 @@ bool gerarCombinacoes(int pos, int sizeKey, char chave[], char letras[][cesarAlv
     if (pos == sizeKey) {
         chave[pos] = '\0';
         decode(new, chave);
-        if(calcularSimilaridade(new) > freqAlvo) {
+        if(validarVogais(new)) {
             if(validarBigramas(new)) {
                 if(coberturaPalavras(new) >= MIN_COBERTURA) {
                     printf("%s - %s\n", new, chave);
@@ -255,7 +267,7 @@ bool gerarCombinacoes(int pos, int sizeKey, char chave[], char letras[][cesarAlv
             } else
                 cBigramas++;
         } else
-            cSimilaridade++;
+            cVogais++;
         strcpy(new, txt);
         return false;
     }
@@ -312,8 +324,6 @@ bool descriptografar(char txt[]) {
         char letras[sizeKey][cesarAlvo];
         char key[sizeKey+1];
         letrasProvaveis(txt, letras, sizeKey);
-        //printf("Chaves de tamanho %d:\n", sizeKey);
-        //printProvaveis(letras, sizeKey);
         if(gerarCombinacoes(0, sizeKey, key, letras, new, txt))
             return true;
     }
@@ -361,12 +371,12 @@ int main() {
     printf("Tempo gasto:\n");
     printf("Total: %.4f segundos\n", tTotal);
     printf("Pre-processamento: %.4f segundos\n", tPre);
-    printf("Calculando similaridade: %.4f segundos\n", tSimilaridade);
+    printf("Analisando vogais: %.4f segundos\n", tVogais);
     printf("Analisando bigramas: %.4f segundos\n", tBigramas);
     printf("Checando na lista de palavras: %.4f segundos\n", tCobertura);
 
     printf("\nEliminacao de possibilidades:\n");
-    printf("Frequencia baixa: %d\n", cSimilaridade);
+    printf("Poucas vogais: %d\n", cVogais);
     printf("Bigramas raros: %d\n", cBigramas);
     printf("Sem palavras reais: %d\n", cCobertura);
     return 0;
