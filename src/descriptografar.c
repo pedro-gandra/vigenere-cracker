@@ -18,7 +18,7 @@ char **allPalavras;
 int qtdePalavras[26];
 char bigramasRaros[TOTAL_BI][2];
 float freqAlvo;
-int cesarAlvo;
+int cesarAlvo = 1;
 float bigramasAlvo;
 
 double frequencias[ALF_LEN] = {0};
@@ -209,22 +209,28 @@ void inserir(probLetra prov[], double sim, int l) {
     }
 }
 
-void gerarCombinacoes(int pos, int sizeKey, char chave[], char letras[][cesarAlvo], char new[], char txt[]) {
+bool gerarCombinacoes(int pos, int sizeKey, char chave[], char letras[][cesarAlvo], char new[], char txt[]) {
     if (pos == sizeKey) {
         chave[pos] = '\0';
         decode(new, chave);
         if(calcularSimilaridade(new) > freqAlvo) {
-            if(validarBigramas(new) && coberturaPalavras(new) >= MIN_COBERTURA)
+            if(validarBigramas(new) && coberturaPalavras(new) >= MIN_COBERTURA) {
                 printf("%s - %s\n", new, chave);
+                return true;
+            }
         }
         strcpy(new, txt);
-        return;
+        return false;
     }
 
     for (int i = 0; i < cesarAlvo; i++) {
         chave[pos] = letras[pos][i];
-        gerarCombinacoes(pos + 1, sizeKey, chave, letras, new, txt);
+        if (gerarCombinacoes(pos + 1, sizeKey, chave, letras, new, txt)) {
+            return true;
+        }
     }
+
+    return false;
 }
 
 void letrasProvaveis(char txt[], char letras[][cesarAlvo], int sizeKey) {
@@ -261,23 +267,25 @@ void printProvaveis(char letras[][cesarAlvo], int sizeKey) {
     }
 }
 
-void descriptografar(char txt[]) {
+bool descriptografar(char txt[]) {
     int sizeKey;
     char new[MAX_TXT];
     strcpy(new, txt);
     for(sizeKey = 1; sizeKey <= MAX_KEY; sizeKey++) {
-        printf("Chaves de tamanho %d:\n", sizeKey);
         char letras[sizeKey][cesarAlvo];
         char key[sizeKey+1];
         letrasProvaveis(txt, letras, sizeKey);
-        printProvaveis(letras, sizeKey);
-        gerarCombinacoes(0, sizeKey, key, letras, new, txt);
+        //printf("Chaves de tamanho %d:\n", sizeKey);
+        //printProvaveis(letras, sizeKey);
+        if(gerarCombinacoes(0, sizeKey, key, letras, new, txt))
+            return true;
     }
+    return false;
 }
 
 int main() {
     freqAlvo = 0.85;
-    cesarAlvo = 5;
+    cesarAlvo = 1;
     bigramasAlvo = 0.10;
     FILE* listaMinusculas = fopen("resources/lista-minusculas.txt", "r");
     FILE* textoCifrado = fopen("resources/texto-cifrado.txt", "r");
@@ -289,7 +297,17 @@ int main() {
     copyBigramas(bigramasRaros);
     char txt[MAX_TXT];
     limparTexto(textoCifrado, txt);
-    descriptografar(txt);
+    printf("\nDESCRIPTOGRAFIA INICIADA\n\n");
+    printf("Texto referencia:\n");
+    printf("%s\n", txt);
+    while(cesarAlvo <= MAX_CESAR) {
+        printf("\nTentando descriptografia com precisao de nivel %d:\n", cesarAlvo);
+        if(descriptografar(txt))
+            break;
+        cesarAlvo++;
+        printf("Nenhum texto possivel\n");
+    }
+    printf("\n");
     //printf("%.4f", calcularSimilaridade("hojeeuvoucomerarrozefeijaoedepoisapresentarabombadotrabalhodeti"));
     //printf("%.4f", coberturaPalavras("hojeeuvoucomerarrozefeijaoedepoisapresentarabombadotrabalhodeti"));
     fclose(listaMinusculas);
