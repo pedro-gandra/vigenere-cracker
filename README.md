@@ -9,7 +9,7 @@ Projeto em C capaz de decodificar de forma eficiente e personalizável textos es
 - `/code/resources/texto-cifrado.txt` — Texto que será decodificado, o repositório tem um exemplo para você testar, substitua pelo texto alvo.
 - `/code/resources/*.txt` — Demais arquivos de texto utilizados pelo programa. Com a excessão do "lista-palavras" foram todos gerados pelos arquivos .c disponíveis no projeto.
 
-## 💡 O que é preciso saber para testar
+## 💡 Saiba para Testar
 
 1. **Texto**
    - Cole o texto cifrado (sem espaços) em "resources/texto-cifrado.txt"
@@ -31,7 +31,7 @@ Na maior parte dos casos, a decodificação deve ser imediata, mas para os casos
 - A cada pelo menos 100.000 tentivas e 1 segundo decorrido, o progresso é exibido no terminal.
 - Estimativas de tempo restante e tempo total decorrido são apresentadas para facilitar o acompanhamento.
 
-## ⚙️​ Como o algoritmo funciona
+## ⚙️​ Como o Algoritmo Funciona
 
 Para reduzir possibilidades de teste o programa utiliza **análise de frequência** e para reconhecer textos válidos usa de **validação fonética** e **validação por cobertura do dicionário**. O passo a passo é o seguinte:
 
@@ -54,8 +54,8 @@ Para reduzir possibilidades de teste o programa utiliza **análise de frequênci
        - O texto decodificado deve ser composto por pelo menos 35% de vogais;
        - Não pode haver nenhuma sequência de 7 caracteres com menos de 2 vogais;
    2. **Bigramas**
-     - Usando uma lista dicionário como base, foi gerada uma lista contendo bigramas raros da língua portuguesa;
-     - Para o texto ser válido, ele deve ter menos de 10% de bigramas raros;
+        - Usando uma lista dicionário como base, foi gerada uma lista contendo bigramas raros da língua portuguesa;
+        - Para o texto ser válido, ele deve ter menos de 10% de bigramas raros;
 
 4. **Cobertura do dicionário**   
     Com os passos anteriores agora sobram poucas combinações, que somente podem ser descartadas através de uma validação com palavras reais, que é feita da seguinte forma:   
