@@ -424,7 +424,6 @@ int main() {
     copyBigramas(bigramasRaros);
     char txt[MAX_TXT];
     limparTexto(textoCifrado, txt);
-
     while(maxKey <= 0) {
         printf("Qual o tamanho maximo da chave a ser testada: ");
         scanf("%d", &maxKey);
@@ -438,13 +437,11 @@ int main() {
         printf("Precisao maxima escolhida: %d\n", precisaoAlvo);
     }
     cTotal = pow(precisaoAlvo, maxKey);
-
     clock_t inicio, fim;
     inicio = clock();
     printf("\nDESCRIPTOGRAFIA INICIADA\n\n");
     printf("Texto referencia:\n");
     printf("%s\n\n", txt);
-    bool sucesso = false;
     if(!descriptografar(txt))
         printf("Nao foi possivel decodificar o texto, a chave usada eh maior do que o maximo informado ou a proporcao texto/chave nao eh grande o suficiente para a precisao utilizada!\n\n");
     fclose(listaMinusculas);
